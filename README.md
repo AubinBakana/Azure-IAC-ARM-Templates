@@ -1,1 +1,3 @@
-A collection of folders that include bicep ARM template files.
+A collection of folders that include from fundamental to advanced bicep ARM template and deployment files.
+
+
