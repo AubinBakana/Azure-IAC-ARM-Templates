@@ -23,6 +23,7 @@ var cosmosDBAccountDiagnosticSettingsName = 'route-logs-to-analytics'
 var storageAccountBlobDiagnosticsSettingsName = 'route-logs-to-log-analytics'
 
 
+// RESOURCES:
 resource cosmosDBAccount 'Microsoft.DocumentDB/databaseAccounts@2020-04-01' = {
   name: cosmosDBAccountName
   location: location
@@ -36,8 +37,6 @@ resource cosmosDBAccount 'Microsoft.DocumentDB/databaseAccounts@2020-04-01' = {
   }
 }
 
-
-// RESOURCES:
 resource cosmosDBDatabase 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2020-04-01' = {
   name: cosmosDBDatabaseName
   parent: cosmosDBAccount
@@ -67,7 +66,6 @@ resource cosmosDBDatabase 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@20
   }
 }
 
-
 resource logAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2020-10-01' existing =  {
   name: logAnalyticsWorkspaceName
 }
@@ -86,7 +84,6 @@ resource cosmosDBAccountDiagnostics 'Microsoft.Insights/diagnosticSettings@2017-
   }
 }
 
-
 resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' existing = {
   name: storageAccountName
 
@@ -94,7 +91,6 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' existing 
     name: 'default'
   }
 }
-
 
 resource storageAccountBlobDiagnosticSettings 'Microsoft.Insights/diagnosticSettings@2017-05-01-preview' = {
   scope: storageAccount::blobServices
