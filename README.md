@@ -1,1 +1,1 @@
-A collection of bicep ARM template files
+A collection of folders that include bicep ARM template files.
