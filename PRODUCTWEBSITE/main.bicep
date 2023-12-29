@@ -1,6 +1,5 @@
 // RESOURCES FOR A WEBAPP PROJECT.
 
-
 // DECLARING PARMETERS AND VARIABLES.
 @description('Datacent or region for the resource deployment.')
 param location string = resourceGroup().location
