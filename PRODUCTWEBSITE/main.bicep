@@ -5,7 +5,10 @@
 @description('Datacent or region for the resource deployment.')
 param location string = resourceGroup().location
 
-
+var blobContainerNames = [
+  'productsSpecs'
+  'productsManuals'
+]
 
 @description('Administrator login: username.')
 @secure()
@@ -24,8 +27,6 @@ param roleDefinitionId string
 @description('Name for the appServiceApp resource')
 param productsWebsiteName string = 'webSite${uniqueString(resourceGroup().id)}'
 
-@description('Name for the container.')
-param blobContainerOneName string = 'productspecs'
 
 @description('Name for products manual')
 param productsManualsName string = 'productmanuals'
@@ -84,12 +85,10 @@ var environmentConfigurationMap = {
 
 
 // RESOURCES
-resource productsManualStorageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
-  name: storageAccountName // ERROR: If the blob service exist, the storage account must also exist.
+resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
+  name: storageAccountName
   location: location
-  sku: {
-    name: 'Standard_LRS'
-  }
+  sku: environmentConfigurationMap[environmentType].storageAccount.sku
   kind: 'StorageV2'
   properties: {
     accessTier: 'Hot'
@@ -97,13 +96,13 @@ resource productsManualStorageAccount 'Microsoft.Storage/storageAccounts@2019-06
 
   resource blobServices 'blobServices' existing = {
     name: 'default'
+
+    resource containers 'containers' = [for blobContainerName in blobContainerNames: {
+      name: blobContainerName
+    }]
   }
 }
 
-resource blobContainerOne 'Microsoft.Storage/storageAccounts/blobServices/containers@2019-06-01' = {
-  parent: productsManualStorageAccount::blobServices
-  name: blobContainerOneName
-}
 
 resource sqlServer 'Microsoft.Sql/servers@2019-06-01-preview' = {
   name: sqlServerName
