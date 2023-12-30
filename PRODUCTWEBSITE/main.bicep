@@ -5,11 +5,6 @@
 @description('Datacent or region for the resource deployment.')
 param location string = resourceGroup().location
 
-var blobContainerNames = [
-  'productsSpecs'
-  'productsManuals'
-]
-
 @description('Administrator login: username.')
 @secure()
 param sqlAdministratorLogin string
@@ -27,10 +22,6 @@ param roleDefinitionId string
 @description('Name for the appServiceApp resource')
 param productsWebsiteName string = 'webSite${uniqueString(resourceGroup().id)}'
 
-
-@description('Name for products manual')
-param productsManualsName string = 'productmanuals'
-
 @allowed([
   'nonProduction'
   'production'
@@ -42,6 +33,10 @@ var hostingPlanName = 'hostingplan${uniqueString(resourceGroup().id)}'
 var sqlServerName = 'toywebsite${uniqueString(resourceGroup().id)}'
 var storageAccountName = 'toywebsite${uniqueString(resourceGroup().id)}'
 var databaseName = 'ToyCompanyWebsite'
+var blobContainerNames = [
+  'productsSpecs'
+  'productsManuals'
+]
 var environmentConfigurationMap = {
   production: {
     appServicePlan: {
@@ -83,7 +78,7 @@ var environmentConfigurationMap = {
 
 
 // RESOURCES
-resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
+resource productsManualStorageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
   name: storageAccountName
   location: location
   sku: environmentConfigurationMap[environmentType].storageAccount.sku
@@ -100,7 +95,6 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
     }]
   }
 }
-
 
 resource sqlServer 'Microsoft.Sql/servers@2019-06-01-preview' = {
   name: sqlServerName
@@ -130,10 +124,6 @@ resource sqlFirewallRules 'Microsoft.Sql/servers/firewallRules@2014-04-01' = {
     endIpAddress: '0.0.0.0'
     startIpAddress: '0.0.0.0'
   }
-}
-
-resource productsManualsContainer 'Microsoft.Storage/storageAccounts/blobServices/containers@2019-06-01' = {
-  name: '${productsManualStorageAccount.name}-default-${productsManualsName}'
 }
 
 resource productWebsitehostingPlan 'Microsoft.Web/serverfarms@2020-06-01' = {
