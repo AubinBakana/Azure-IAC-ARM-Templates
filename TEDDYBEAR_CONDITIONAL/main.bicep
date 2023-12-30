@@ -40,7 +40,7 @@ var subnetProperties = [for subnet in subnets: {
 }] 
 
 
-// Create resources. 
+// RESOURCES 
 module databases 'modules/database.bicep' = [for location in locations: {
   name: 'database-${location}'
   params: {
