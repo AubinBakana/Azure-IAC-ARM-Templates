@@ -4,7 +4,7 @@ This material is the work I produced over time during self development work with
 
 *Note: Content for this repository is still being added. It will grow with time.*
 
-### Projects in this repository include work done to demonstrate ability for the following:
+### Projects here include work done to demonstrate ability for the following:
 
 **- Deploy child and extension resources with Bicep**
 
