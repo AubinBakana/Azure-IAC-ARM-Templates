@@ -14,7 +14,7 @@ param sqlAdministratorLogin string
 param sqlAdministratorLoginPassword string
 
 @description('Name of the resource Managed Identity.')
-param managedIdentityName string = take('managed-identity-product-manual-toy-website-${uniqueString(resourceGroup().id)}', 64)
+param managedIdentityName string = take('managed-identity-products-manual-toy-website-${uniqueString(resourceGroup().id)}', 64)
 
 @description('Identity role definition to scope user\'s access level.')
 param roleDefinitionId string
@@ -126,7 +126,7 @@ resource sqlFirewallRules 'Microsoft.Sql/servers/firewallRules@2014-04-01' = {
   }
 }
 
-resource productWebsitehostingPlan 'Microsoft.Web/serverfarms@2020-06-01' = {
+resource productsWebsitehostingPlan 'Microsoft.Web/serverfarms@2020-06-01' = {
   name: hostingPlanName
   location: location
   sku: {
@@ -135,11 +135,11 @@ resource productWebsitehostingPlan 'Microsoft.Web/serverfarms@2020-06-01' = {
   }
 }
 
-resource productsWebite 'Microsoft.Web/sites@2020-06-01' = {
+resource productsWebiteApp 'Microsoft.Web/sites@2020-06-01' = {
   name: productsWebsiteName
   location: location
   properties: {
-    serverFarmId: productWebsitehostingPlan.id
+    serverFarmId: productsWebsitehostingPlan.id
     siteConfig: {
       appSettings: [
         {
@@ -156,22 +156,22 @@ resource productsWebite 'Microsoft.Web/sites@2020-06-01' = {
   identity: {
     type: 'UserAssigned'
     userAssignedIdentities: {
-      '${productWebsiteUserAssignedIdentity.id}': {}
+      '${productsWebsiteUserAssignedIdentity.id}': {}
     }
   }
 }
 
-resource productWebsiteUserAssignedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
+resource productsWebsiteUserAssignedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' = {
   name: managedIdentityName
   location: location
 }
 
-resource websiteManagedIdentityRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+resource productsWebsiteManagedIdentityRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
   name: guid(roleDefinitionId, resourceGroup().id)
   properties: {
     principalType: 'ServicePrincipal'
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleDefinitionId)
-    principalId: productWebsiteUserAssignedIdentity.properties.principalId
+    principalId: productsWebsiteUserAssignedIdentity.properties.principalId
   }
 }
 
@@ -183,5 +183,8 @@ resource websiteAppInsights 'Microsoft.Insights/components@2018-05-01-preview' =
     Application_Type: 'web'
   }
 }
+
+
+
 
 
