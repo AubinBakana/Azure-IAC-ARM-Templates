@@ -26,7 +26,7 @@ param productsWebsiteName string = 'webSite${uniqueString(resourceGroup().id)}'
   'nonProduction'
   'production'
 ])
-@description('Resource deployment depends on the environment. Choose \'prod\' for Production or \'non-prod\' for Non-Production  ')
+@description('Resource deployment depends on the environment. Choose \'production\' for Production or \'nonProduction\' for Non-Production  ')
 param environmentType string = 'nonProduction'
 
 var hostingPlanName = 'hostingplan${uniqueString(resourceGroup().id)}'
