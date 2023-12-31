@@ -29,7 +29,7 @@ param productsWebsiteName string = 'webSite${uniqueString(resourceGroup().id)}'
 @description('Resource deployment depends on the environment. Choose \'production\' for Production or \'nonProduction\' for Non-Production  ')
 param environmentType string = 'nonProduction'
 
-var hostingPlanName = 'hostingplan${uniqueString(resourceGroup().id)}'
+var appServiceName = 'hostingplan${uniqueString(resourceGroup().id)}'
 var sqlServerName = 'toywebsite${uniqueString(resourceGroup().id)}'
 var storageAccountName = 'toywebsite${uniqueString(resourceGroup().id)}'
 var databaseName = 'ToyCompanyWebsite'
@@ -39,11 +39,11 @@ var blobContainerNames = [
 ]
 var environmentConfigurationMap = {
   production: {
-    appServicePlan: {
+    appService: {
       sku: {
         name: 'S1'
+        capacity: 2
       }
-      capacity: 2
     }
     storageAccount: {
       sku: {
@@ -57,11 +57,11 @@ var environmentConfigurationMap = {
     }
   } 
   nonProduction: {
-    appServicePlan: {
+    appService: {
       sku: {
         name: 'F1'
+        capacity: 1
       }
-      capacity: 1
     }
     storageAccount: {
       sku: {
@@ -81,7 +81,9 @@ var environmentConfigurationMap = {
 resource productsManualStorageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = {
   name: storageAccountName
   location: location
-  sku: environmentConfigurationMap[environmentType].storageAccount.sku
+  sku: {
+    name: environmentConfigurationMap[environmentType].storageAccount.sku
+  } 
   kind: 'StorageV2'
   properties: {
     accessTier: 'Hot'
@@ -126,25 +128,25 @@ resource sqlFirewallRules 'Microsoft.Sql/servers/firewallRules@2014-04-01' = {
   }
 }
 
-resource productsWebsitehostingPlan 'Microsoft.Web/serverfarms@2020-06-01' = {
-  name: hostingPlanName
+resource productsWebsiteAppService 'Microsoft.Web/serverfarms@2020-06-01' = {
+  name: appServiceName
   location: location
   sku: {
-    name:environmentConfigurationMap[environmentType].appServicePlan.sku.name
-    capacity: environmentConfigurationMap[environmentType].appServicePlan.capacity
+    name:environmentConfigurationMap[environmentType].appService.sku.name
+    capacity: environmentConfigurationMap[environmentType].appService.capacity
   }
 }
 
-resource productsWebiteApp 'Microsoft.Web/sites@2020-06-01' = {
+resource productsWebiteAppServiceApp 'Microsoft.Web/sites@2020-06-01' = {
   name: productsWebsiteName
   location: location
   properties: {
-    serverFarmId: productsWebsitehostingPlan.id
+    serverFarmId: productsWebsiteAppService.id
     siteConfig: {
       appSettings: [
         {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
-          value: websiteAppInsights.properties.InstrumentationKey
+          value: productsWebsiteAppInsights.properties.InstrumentationKey
         }
         {
           name: 'StorageAccountConnectionString'
@@ -175,7 +177,7 @@ resource productsWebsiteManagedIdentityRoleAssignment 'Microsoft.Authorization/r
   }
 }
 
-resource websiteAppInsights 'Microsoft.Insights/components@2018-05-01-preview' = {
+resource productsWebsiteAppInsights 'Microsoft.Insights/components@2018-05-01-preview' = {
   name: 'AppInsights'
   location: location
   kind: 'web'
