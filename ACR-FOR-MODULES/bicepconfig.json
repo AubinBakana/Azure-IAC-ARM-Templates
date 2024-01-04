@@ -1,0 +1,9 @@
+{
+  "moduleAliases": {
+    "br": {
+      "ToyCompanyRegistry": {
+        "registry": "storemodules040124.azurecr.io"
+      }
+    }
+  }
+}
