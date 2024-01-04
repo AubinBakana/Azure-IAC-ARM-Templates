@@ -1,9 +1,13 @@
 // DEPLOYS A STORAGE ACCOUNT, ROLE DEFINITION & ASSIGNMENT, AND RELATED DEPLOYMENT SCRIPT RESOURCES.
-// APP SETTINGS FILE STAGING AUTOMATION WITH DEPLOYMENT SCRIPT: USING A POWERSHELL SCRIPT WITH DEPLOYMENT SCRIPT RESOURCE, DEPLOYMENT ALSO DOWNLOADS APPLICATIONS SETTING FILE FROM THE WEB AND SAVES CONTENT TO STAGE IN BLOB CONTAINER FOR A NEW APPLICATION TO READ
+// APP SETTINGS FILE STAGING AUTOMATION WITH DEPLOYMENT SCRIPT: USING A POWERSHELL SCRIPT WITH DEPLOYMENT SCRIPT RESOURCE
+// DEPLOYMENT SCRIPT TRANSFORM A LIST OF FILE NAMES, MAKES AN API REQUEST AND DOWNLOADS CORRESPONDING APPLICATIONS SETTINGS FILE FROM THE WEB; THEN STAGES CONTENT IN BLOB CONTAINER FOR RELATED NEW APPLICATION TO READ
 
 // PARAMETERS & VARIABLES DECLARATIONS
 var storageAccountName = 'storage${uniqueString(resourceGroup().id)}'
 param location string = resourceGroup().location
+
+@description('List of files to copy to application storage account.')
+param filesToCopy array
 
 var storageBlobContainerName = 'config'
 var userAssignedManagedIdentityName = 'configDeployer'
@@ -63,6 +67,7 @@ resource roleAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-prev
   }
 }
 
+// Script accepts a list of app settings file name, sends an API request to get app settings, then stage content to related app container for each file. Also return output to adminstrator
 resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   name: deploymentScriptName
   location: location
@@ -79,17 +84,42 @@ resource deploymentScript 'Microsoft.Resources/deploymentScripts@2020-10-01' = {
   ]
   properties: {
     azPowerShellVersion: '3.0'
+    arguments: '-File \'${string(filesToCopy)}\''
+    environmentVariables: [
+      {
+        name: 'ResourceGroupName'
+        value: resourceGroup().name
+      }
+      {
+        name: 'StorageAccountName'
+        value: storageAccountName
+      }
+      {
+        name: 'StorageContainerName'
+        value: storageBlobContainerName
+      }
+    ]
     scriptContent: '''
-      Invoke-RestMethod -Uri 'https://raw.githubusercontent.com/Azure/azure-docs-json-samples/master/mslearn-arm-deploymentscripts-sample/appsettings.json' -OutFile 'appsettings.json'
-      $storageAccount = Get-AzStorageAccount -ResourceGroupName 'learndeploymentscript_exercise_1' | Where-Object { $_.StorageAccountName -like 'storage*' }
-      $blob = Set-AzStorageBlobContent -File 'appsettings.json' -Container 'config' -Blob 'appsettings.json' -Context $storageAccount.Context
-      $DeploymentScriptOutputs = @{}
-      $DeploymentScriptOutputs['Uri'] = $blob.ICloudBlob.Uri
-      $DeploymentScriptOutputs['StorageUri'] = $blob.ICloudBlob.StorageUri
+    param([string]$File)
+    $fileList = $File -replace '(\[|\])' -split ',' | ForEach-Object { $_.trim() }
+    $storageAccount = Get-AzStorageAccount -ResourceGroupName $env:ResourceGroupName -Name $env:StorageAccountName -Verbose
+    $count = 0
+    $DeploymentScriptOutputs = @{}
+    foreach ($fileName in $fileList) {
+        Write-Host "Copying $fileName to $env:StorageContainerName in $env:StorageAccountName."
+        Invoke-RestMethod -Uri "https://raw.githubusercontent.com/Azure/azure-docs-json-samples/master/mslearn-arm-deploymentscripts-sample/$fileName" -OutFile $fileName
+        $blob = Set-AzStorageBlobContent -File $fileName -Container $env:StorageContainerName -Blob $fileName -Context $storageAccount.Context
+        $DeploymentScriptOutputs[$fileName] = @{}
+        $DeploymentScriptOutputs[$fileName]['Uri'] = $blob.ICloudBlob.Uri
+        $DeploymentScriptOutputs[$fileName]['StorageUri'] = $blob.ICloudBlob.StorageUri
+        $count++
+    }
+    Write-Host "Finished copying $count files."
     '''
     retentionInterval: 'P1D'
   }
 }
 
 // OUTPUT
-output fileUri string = deploymentScript.properties.outputs.Uri
+output fileUri object = deploymentScript.properties.outputs
+output storageAccountName string = storageAccountName
